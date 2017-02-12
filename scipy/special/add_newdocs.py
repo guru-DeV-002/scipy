@@ -3034,36 +3034,50 @@ add_newdoc("scipy.special", "hyp2f1",
     """
     hyp2f1(a, b, c, z)
 
-    Gauss hypergeometric function 2F1(a, b; c; z).
+    Gauss hypergeometric function 2F1(a, b; c; z) is defined as:
 
-    \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{{a+k}\choose{a}} {{b+k}}\choose{b}}}{{c+k}\choose{c}} z^(k+1).
+    \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{a+k}\choose{a}} {b+k}\choose{b}}{{c+k}\choose{c}} z^(k+1).
+
+    OR  
+
+    \mathrm{hyp2f1}(a, b, c, z) = \sum_{n=0}^inf. \frac{(a)_n (b)_n}{(c)_n}\frac{z^n}{n!}
+
+     where :math:`(\cdot)_n` is the Pochhammer symbol; see `poch`. When
+    :math:`n` is an integer the result is a polynomial of degree
+    :math:`n`
+
+    Gaussian hypergeometric function is defined on the disk |z|<1, and by analytic continuation elsewhere.
+    The branch obtained by introsucing a cut from 1 to infinity on the real z-axis, 
+    that is, the branch in the sector |ph(1-z)| <= \pi, is the principal branch (or principal value) of F(a,b;c;z).
 
     Parameters
     ----------
-    a : array_like
-        Parameter
+    a : real array_like
+        argument
 
-    b : array_like
-        Parameter
+    b : real array_like
+        argument
 
-    c : array_like
-        Parameter
+    c : real array_like
+        argument
 
-    z : array_like
-        Parameter
+    z : real or complex array_like
+        argument
 
     Returns
     -------
-    y : ndarray
-        y being the values of the gaussian hypergeometric function.
+        ndarray , 
+        the values of the gaussian hypergeometric function.
 
     Notes
     -----
 
-    Gaussian function is defined on the disk |z|<1, and by analytic continuation elsewhere.
-    The branch obtained by introsucing a cut from 1 to infinity on the real z-axis, 
-    that is, the branch in the sector |ph(1-z)| <= \pi, is the principal branch (or principal value) of F(a,b;c;z).
+    hyp2f1 can be used to find the values of the gaussain hypergeometric function.
     http://dlmf.nist.gov/15.2 
+
+    For complex arguments z with |z| >= 1 it can be analytically continued along any path in the complex plane that avoids the branch points 0 and 1.
+
+    As c tends to -m, where m is a positive integer, 2F1(a,b;c;z) tends to infinity.
 
     Cases addressed are
       Tests and escapes for negative integer a, b, or c
@@ -3079,13 +3093,11 @@ add_newdoc("scipy.special", "hyp2f1",
 
       z >= 1 is rejected (unless special cases are present)
 
-      a,b,c or z can take up complex values too.
-      
       http://dlmf.nist.gov/15.4
 
     See also
     --------
-    hyp0f1 : confluent hypergeometric function.
+    hyp0f1 : confluent hypergeometric limit function.
     hyp1f1 : Kummer's (confluent hypergeometric) function.
 
     References
