@@ -3060,12 +3060,9 @@ add_newdoc("scipy.special", "hyp2f1",
     Notes
     -----
 
-    Gaussian function is defined on the disk |z|<1, and by analytic continuation elsewhere. 
-    In general, F⁡(a,b;c;z) does not exist when c=0,-1,-2,.... 
-    The branch obtained by introducing a cut from 1 to +inf on the real z-axis, 
-    that is, the branch in the sector |ph⁡(1-z)|≤π, is the principal branch 
-    (or principal value) of F⁡(a,b;c;z).http://dlmf.nist.gov/15.2
-
+    Gaussian function is defined on the disk |z|<1, and by analytic continuation elsewhere.
+    The branch obtained by introsucing a cut from 1 to infinity on the real z-axis, 
+    that is, the branch in the sector |ph(1-z)| <= \pi, is the principal branch (or principal value) of F(a,b;c;z). 
 
     Cases addressed are
       Tests and escapes for negative integer a, b, or c
