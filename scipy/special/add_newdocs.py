@@ -3036,28 +3036,37 @@ add_newdoc("scipy.special", "hyp2f1",
 
     Gauss hypergeometric function 2F1(a, b; c; z).
 
+    \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{{a+k}\choose{a}} {{b+k}}\choose{b}}}{{c+k}\choose{c}} z^(k+1).
+
     Parameters
     ----------
-    a : double argument.
+    a : array_like
+        Parameter
 
-    b : double argument.
+    b : array_like
+        Parameter
 
-    c : double argument.
+    c : array_like
+        Parameter
 
-    z : double argument.
+    z : array_like
+        Parameter
 
     Returns
     -------
-    y : double argument
-        y being the solution to the second-order linear ordinary differential equation.
+    y : ndarray
+        y being the values of the gaussian hypergeometric function.
 
     Notes
     -----
 
-    .. math::
+    Gaussian function is defined on the disk |z|<1, and by analytic continuation elsewhere. 
+    In general, F⁡(a,b;c;z) does not exist when c=0,-1,-2,…. 
+    The branch obtained by introducing a cut from 1 to +∞ on the real z-axis, 
+    that is, the branch in the sector |ph⁡(1-z)|≤π, is the principal branch 
+    (or principal value) of F⁡(a,b;c;z).http://dlmf.nist.gov/15.2
 
-        \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{{a+k}\choose{a}} {{b+k}}\choose{b}}}{{c+k}\choose{c}} z^(k+1).
-    
+
     Cases addressed are
       Tests and escapes for negative integer a, b, or c
       Linear transformation if c - a or c - b negative integer
@@ -3071,10 +3080,15 @@ add_newdoc("scipy.special", "hyp2f1",
          valid for b,a,c,(b-a) != integer and (c-a),(c-b) != negative integer
 
       z >= 1 is rejected (unless special cases are present)
-    
+
+      a,b,c or z can take up complex values too.
+      
+      http://dlmf.nist.gov/15.4
+      
     See also
     --------
-    hyp1f1 , hyp0f1.
+    hyp0f1 : confluent hypergeometric function.
+    hyp1f1 : Kummer's (confluent hypergeometric) function.
 
     References
     ----------
