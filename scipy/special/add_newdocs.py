@@ -3035,6 +3035,64 @@ add_newdoc("scipy.special", "hyp2f1",
     hyp2f1(a, b, c, z)
 
     Gauss hypergeometric function 2F1(a, b; c; z).
+
+    \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{{a+k}\choose{a}} {{b+k}}\choose{b}}}{{c+k}\choose{c}} z^(k+1).
+
+    Parameters
+    ----------
+    a : array_like
+        Parameter
+
+    b : array_like
+        Parameter
+
+    c : array_like
+        Parameter
+
+    z : array_like
+        Parameter
+
+    Returns
+    -------
+    y : ndarray
+        y being the values of the gaussian hypergeometric function.
+
+    Notes
+    -----
+
+    Gaussian function is defined on the disk |z|<1, and by analytic continuation elsewhere.
+    The branch obtained by introsucing a cut from 1 to infinity on the real z-axis, 
+    that is, the branch in the sector |ph(1-z)| <= \pi, is the principal branch (or principal value) of F(a,b;c;z).
+    http://dlmf.nist.gov/15.2 
+
+    Cases addressed are
+      Tests and escapes for negative integer a, b, or c
+      Linear transformation if c - a or c - b negative integer
+      Special case c = a or c = b
+      Linear transformation for  z near +1
+      Transformation for z < -0.5
+      Psi function expansion if z > 0.5 and c - a - b integer
+      Conditionally, a recurrence on c to make c-a-b > 0
+
+      z < -1  AMS 15.3.7 transformation applied (Travis Oliphant)
+         valid for b,a,c,(b-a) != integer and (c-a),(c-b) != negative integer
+
+      z >= 1 is rejected (unless special cases are present)
+
+      a,b,c or z can take up complex values too.
+      
+      http://dlmf.nist.gov/15.4
+
+    See also
+    --------
+    hyp0f1 : confluent hypergeometric function.
+    hyp1f1 : Kummer's (confluent hypergeometric) function.
+
+    References
+    ----------
+    .. [1] Cephes Mathematical Functions Library,
+           http://www.netlib.org/cephes/index.html
+
     """)
 
 add_newdoc("scipy.special", "hyp3f0",
