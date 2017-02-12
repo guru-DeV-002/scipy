@@ -3073,11 +3073,14 @@ add_newdoc("scipy.special", "hyp2f1",
     -----
 
     hyp2f1 can be used to find the values of the gaussain hypergeometric function.
+
     http://dlmf.nist.gov/15.2 
 
     For complex arguments z with |z| >= 1 it can be analytically continued along any path in the complex plane that avoids the branch points 0 and 1.
 
     As c tends to -m, where m is a positive integer, 2F1(a,b;c;z) tends to infinity.
+
+    http://dlmf.nist.gov/15.2 
 
     Cases addressed are
       Tests and escapes for negative integer a, b, or c
@@ -3093,11 +3096,14 @@ add_newdoc("scipy.special", "hyp2f1",
 
       z >= 1 is rejected (unless special cases are present)
 
+      a,b,c or z can take up complex values too.
+      
       http://dlmf.nist.gov/15.4
 
     See also
     --------
     hyp0f1 : confluent hypergeometric limit function.
+
     hyp1f1 : Kummer's (confluent hypergeometric) function.
 
     References
