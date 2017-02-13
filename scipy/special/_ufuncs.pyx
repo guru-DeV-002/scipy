@@ -7382,11 +7382,11 @@ cdef char *ufunc_hyp2f1_doc = (
     "\n"
     "Gauss hypergeometric function 2F1(a, b; c; z) is defined as:\n"
     "\n"
-    "\\mathrm{hyp2f1}(a, b, c, z) = 1 + \\sum_{k=0}^inf. rac {{a+k}\\choose{a}} {b+k}\\choose{b}}{{c+k}\\choose{c}} z^(k+1).\n"
+    "\\mathrm{hyp2f1}(a, b, c, z) = 1 + \\sum_{k=0}^inf. \\frac {{a+k}\\choose{a}} {b+k}\\choose{b}}{{c+k}\\choose{c}} z^(k+1).\n"
     "\n"
     "OR  \n"
     "\n"
-    "\\mathrm{hyp2f1}(a, b, c, z) = \\sum_{n=0}^inf. rac{(a)_n (b)_n}{(c)_n}rac{z^n}{n!}\n"
+    "\\mathrm{hyp2f1}(a, b, c, z) = \\sum_{n=0}^inf. \\frac{(a)_n (b)_n}{(c)_n}\\frac{z^n}{n!}\n"
     "\n"
     " where :math:`(\\cdot)_n` is the Pochhammer symbol; see `poch`. When\n"
     ":math:`n` is an integer the result is a polynomial of degree\n"

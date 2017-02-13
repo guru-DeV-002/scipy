@@ -3036,7 +3036,7 @@ add_newdoc("scipy.special", "hyp2f0",
     """)
 
 add_newdoc("scipy.special", "hyp2f1",
-    """
+    r"""
     hyp2f1(a, b, c, z)
 
     Gauss hypergeometric function 2F1(a, b; c; z) is defined as:
