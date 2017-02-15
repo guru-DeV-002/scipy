@@ -7380,7 +7380,7 @@ cdef char ufunc_hyp2f1_types[20]
 cdef char *ufunc_hyp2f1_doc = (
     "hyp2f1(a, b, c, z)\n"
     "\n"
-    "Gauss hypergeometric function 2F1(a, b; c; z) is defined as:\n"
+    "Gauss hypergeometric function 2F1(a, b; c; z), defined as:\n"
     "\n"
     "\\mathrm{hyp2f1}(a, b, c, z) = 1 + \\sum_{k=0}^inf. \\frac {{a+k}\\choose{a}} {b+k}\\choose{b}}{{c+k}\\choose{c}} z^(k+1).\n"
     "\n"

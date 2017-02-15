@@ -3039,7 +3039,7 @@ add_newdoc("scipy.special", "hyp2f1",
     r"""
     hyp2f1(a, b, c, z)
 
-    Gauss hypergeometric function 2F1(a, b; c; z) is defined as:
+    Gauss hypergeometric function 2F1(a, b; c; z), defined as:
 
     \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{a+k}\choose{a}} {b+k}\choose{b}}{{c+k}\choose{c}} z^(k+1).
 
