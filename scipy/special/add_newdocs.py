@@ -3036,86 +3036,10 @@ add_newdoc("scipy.special", "hyp2f0",
     """)
 
 add_newdoc("scipy.special", "hyp2f1",
-    r"""
+    """
     hyp2f1(a, b, c, z)
 
-    Gauss hypergeometric function 2F1(a, b; c; z), defined as:
-
-    \mathrm{hyp2f1}(a, b, c, z) = 1 + \sum_{k=0}^inf. \frac {{a+k}\choose{a}} {b+k}\choose{b}}{{c+k}\choose{c}} z^(k+1).
-
-    OR  
-
-    \mathrm{hyp2f1}(a, b, c, z) = \sum_{n=0}^inf. \frac{(a)_n (b)_n}{(c)_n}\frac{z^n}{n!}
-
-     where :math:`(\cdot)_n` is the Pochhammer symbol; see `poch`. When
-    :math:`n` is an integer the result is a polynomial of degree
-    :math:`n`
-
-    Gaussian hypergeometric function is defined on the disk |z|<1, and by analytic continuation elsewhere.
-    The branch obtained by introsucing a cut from 1 to infinity on the real z-axis, 
-    that is, the branch in the sector |ph(1-z)| <= \pi, is the principal branch (or principal value) of F(a,b;c;z).
-
-    Parameters
-    ----------
-    a : real array_like
-        argument
-
-    b : real array_like
-        argument
-
-    c : real array_like
-        argument
-
-    z : real or complex array_like
-        argument
-
-    Returns
-    -------
-        ndarray , 
-        the values of the gaussian hypergeometric function.
-
-    Notes
-    -----
-
-    hyp2f1 can be used to find the values of the gaussain hypergeometric function.
-
-    http://dlmf.nist.gov/15.2 
-
-    For complex arguments z with |z| >= 1 it can be analytically continued along any path in the complex plane that avoids the branch points 0 and 1.
-
-    As c tends to -m, where m is a positive integer, 2F1(a,b;c;z) tends to infinity.
-
-    http://dlmf.nist.gov/15.2 
-
-    Cases addressed are
-      Tests and escapes for negative integer a, b, or c
-      Linear transformation if c - a or c - b negative integer
-      Special case c = a or c = b
-      Linear transformation for  z near +1
-      Transformation for z < -0.5
-      Psi function expansion if z > 0.5 and c - a - b integer
-      Conditionally, a recurrence on c to make c-a-b > 0
-
-      z < -1  AMS 15.3.7 transformation applied (Travis Oliphant)
-         valid for b,a,c,(b-a) != integer and (c-a),(c-b) != negative integer
-
-      z >= 1 is rejected (unless special cases are present)
-
-      a,b,c or z can take up complex values too.
-      
-      http://dlmf.nist.gov/15.4
-
-    See also
-    --------
-    hyp0f1 : confluent hypergeometric limit function.
-
-    hyp1f1 : Kummer's (confluent hypergeometric) function.
-
-    References
-    ----------
-    .. [1] Cephes Mathematical Functions Library,
-           http://www.netlib.org/cephes/index.html
-
+    Gauss hypergeometric function 2F1(a, b; c; z).
     """)
 
 add_newdoc("scipy.special", "hyp3f0",
