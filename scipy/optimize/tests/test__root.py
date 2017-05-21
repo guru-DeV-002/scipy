@@ -10,6 +10,11 @@ from scipy.optimize import root
 
 
 class TestRoot(object):
+    def test_callable(self):
+        def func(x):
+            return (x - 1)**2 - 1
+        root(func,1.0)
+        
     def test_tol_parameter(self):
         # Check that the minimize() tol= argument does something
         def func(z):
