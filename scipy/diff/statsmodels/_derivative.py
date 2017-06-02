@@ -3,7 +3,7 @@ import numpy as np
 from _epsilon_generator import _epsilon
 
 def derivative(f,x,method='central',eps=None):
-	'''
+    '''
     Derivative of a function
 
     Parameters
@@ -13,7 +13,7 @@ def derivative(f,x,method='central',eps=None):
     f : function
         `f(x)` returning one value.
     method : {'central','foward'}
-		method for computing the derivative
+        method for computing the derivative
     epsilon : float, optional
         Stepsize, if None, optimal stepsize is used. This is EPS**(1/2)*x for
         `centered` == False and EPS**(1/3)*x for `centered` == True.
@@ -23,17 +23,16 @@ def derivative(f,x,method='central',eps=None):
         derivative
     '''
 
-	x = np.asarray(x)
+    x = np.asarray(x)
 
-	if method is 'central':
-		s = 3
-	else:
-		s = 2
+    if method is 'central':
+        s = 3
+    else:
+        s = 2
 
-	epsilon = _epsilon(x,s,eps)
-	der = np.empty(x.size)
+    epsilon = _epsilon(x,s,eps)
+    der = np.empty(x.size)
+    der = (f(x+epsilon)-f(x))/epsilon
+    return der
 
-	for i in range(x.size):
-		der[i] = (f(x[i] + epsilon[i]) - f(x[i]))/epsilon[i]
 
-	return der
