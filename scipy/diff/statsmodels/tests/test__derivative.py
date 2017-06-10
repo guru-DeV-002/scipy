@@ -45,12 +45,11 @@ class Test(object):
         assert_(np.allclose(df, f, rtol=1e-3))
 
     def test_jacobian(self):
-        for method in ['central', 'forward']:
-            np.random.seed(0)
-            rand = 2*1000*np.random.rand(2, 100)-1000
-            df = jacobian(fun3, np.transpose(rand), method=method)
-            f = np.transpose(df_fun3(*rand))
-            assert_(np.allclose(df, f, rtol=1e-2))
+        np.random.seed(0)
+        rand = 2*1000*np.random.rand(2, 1000)-1000
+        df = jacobian(fun3, np.transpose(rand))
+        f = np.transpose(df_fun3(*rand))
+        assert_(np.allclose(df, f, rtol=1e-2))
 
 
 if __name__ == '__main__':
