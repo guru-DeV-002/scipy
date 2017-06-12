@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import
 import numpy as np
 from numpy.testing import (assert_, run_module_suite)
-from scipy.diff.statmodels._derivative import derivative, gradient, jacobian
+from scipy.diff._derivative import derivative, gradient, jacobian
 
 
 def fun(x):

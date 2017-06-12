@@ -1,13 +1,13 @@
 import numpy as np
 from numpy.testing import (assert_, run_module_suite)
-from scipy.diff.numdifftools._step_generators import _generate_step
+from scipy.diff._step_generators import _generate_step
 
 
 def steps(base_step, step_ratio, num_steps, sign):
     for i in range(num_steps):
-            steps = base_step * step_ratio ** (sign*i)
-            if (np.abs(steps) > 0).all():
-                yield steps
+        steps = base_step * step_ratio**(sign*i)
+        if (np.abs(steps) > 0).all():
+            yield steps
 
 
 class Test(object):

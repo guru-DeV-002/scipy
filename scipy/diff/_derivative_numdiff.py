@@ -3,7 +3,47 @@ import numpy as np
 from _step_generators import _generate_step
 from scipy import misc
 from scipy.ndimage.filters import convolve1d
+from scipy import linalg
+import warnings
 
+EPS = np.finfo(float).eps
+TINY = np.finfo(float).tiny
+
+def extrapolate(order,num_terms,step,step_ratio,results,steps,shape):
+    res_shape = results.shape[0]
+    if res_shape is None:
+        res_shape = num_terms + 1
+    num_terms = min(num_terms, res_shape - 1)
+    if num_terms > 0:
+        i, j = np.ogrid[0:num_terms + 1, 0:num_terms]
+        r_mat = np.ones((num_terms + 1, num_terms + 1))
+        r_mat[:, 1:] = (1.0 / step_ratio) ** (i * (step * j + order))
+        r_mat = linalg.pinv(r_mat)[0]
+    else:
+        r_mat = np.ones((1,))
+    new_sequence = convolve1d(results, r_mat[::-1], axis=0, origin=(num_terms) // 2)
+    new_sequence = new_sequence[:res_shape + 1 - num_terms]
+    steps = steps[:res_shape + 1 - num_terms]
+    #errors for len < 2
+    if len(new_sequence) > 2:
+        steps = steps[2:]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            conv1 = new_sequence[0:-2]
+            conv2 = new_sequence[1:-1]
+            conv3 = new_sequence[2:]
+            err1 = conv2 - conv1
+            err2 = conv3 - conv2
+            tol1 = np.maximum(np.abs(conv1),np.abs(conv2)) * EPS
+            tol2 = np.maximum(np.abs(conv3),np.abs(conv2)) * EPS
+            err1[np.abs(err1) < TINY] = TINY
+            err2[np.abs(err2) < TINY] = TINY 
+            ss = 1.0 / err2 - 1.0 / err1 + TINY
+            small = abs(ss * conv2) <= 1.0e-3
+            converged = (np.abs(err1) <= tol1) & (np.abs(err2) <= tol2) | small
+            new_sequence = np.where(converged, conv3 * 1.0, conv2 + 1.0 / ss)
+            abserr = np.abs(err1) + np.abs(err2) + np.where(converged, tol2 * 10, np.abs(new_sequence - conv3))
+    return new_sequence
 
 def derivative(f, x, **options):
     x = np.asarray(x)
@@ -68,11 +108,13 @@ def derivative(f, x, **options):
         fdi = fd[term]
     fdiff = convolve1d(fun, fdi[::-1], axis=0, origin=(fdi.size - 1) // 2)
     derivative = fdiff / (h ** n)
-    return derivative
+    num_steps = max(h.shape[0] + 1 - fdi.size,1)
+    derivative = extrapolate(order,richarson_terms,richardson_step,step_ratio,derivative[:num_steps],h[:num_steps],np.shape(results[0]))
+    return derivative[:h.shape[0]]
 
 
 def fun(x):
-    return x
+    return x**2 + 2*x + 3*x**3
 
 
 print derivative(fun, [1, 2])
