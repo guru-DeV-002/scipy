@@ -9,6 +9,36 @@ import warnings
 EPS = np.finfo(float).eps
 TINY = np.finfo(float).tiny
 
+def choose_derivative_with_least_error(der,errors):
+    try:
+        median = np.nanmedian(errors, axis=0)
+        p75 = np.nanpercentile(errors, 75, axis=0)
+        p25 = np.nanpercentile(errors, 25, axis=0)
+        iqr = np.abs(p75-p25)
+        a_median = np.abs(median)
+        outliers = (((abs(errors) < (a_median / 10)) +
+                    (abs(errors) > (a_median * 10))) * (a_median > 1e-8) +
+                    ((errors < p25-1.5*iqr) + (p75+1.5*iqr < der)))
+        errors = outliers * np.abs(errors - median)
+    except ValueError as msg:
+        warnings.warn(str(msg))
+        errors = 0 * errors
+
+    try:
+        result = np.nanargmin(errors, axis=0)
+        result = np.asarray(result, dtype=float)
+        min_errors = np.nanmin(errors, axis=0)
+        for i, min_error in enumerate(min_errors):
+            idx = np.flatnonzero(errors[:, i] == min_error)
+            result[i] = (der[idx[idx.size // 2]][i])
+        return result
+    except ValueError as msg:
+        warnings.warn(str(msg))
+        result = np.zeros(der.shape[0], dtype=float)
+        for i in der.shape[0]:
+            result[i] = der[np.arange(der.shape[1])][i]
+        return result
+
 def extrapolate(order,num_terms,step,step_ratio,results,steps,shape):
     res_shape = results.shape[0]
     if res_shape is None:
@@ -43,7 +73,8 @@ def extrapolate(order,num_terms,step,step_ratio,results,steps,shape):
             converged = (np.abs(err1) <= tol1) & (np.abs(err2) <= tol2) | small
             new_sequence = np.where(converged, conv3 * 1.0, conv2 + 1.0 / ss)
             abserr = np.abs(err1) + np.abs(err2) + np.where(converged, tol2 * 10, np.abs(new_sequence - conv3))
-    return new_sequence
+            result = choose_derivative_with_least_error(new_sequence,abserr)
+    return result
 
 def derivative(f, x, **options):
     x = np.asarray(x)
@@ -110,7 +141,7 @@ def derivative(f, x, **options):
     derivative = fdiff / (h ** n)
     num_steps = max(h.shape[0] + 1 - fdi.size,1)
     derivative = extrapolate(order,richarson_terms,richardson_step,step_ratio,derivative[:num_steps],h[:num_steps],np.shape(results[0]))
-    return derivative[:h.shape[0]]
+    return derivative
 
 
 def fun(x):
