@@ -3,10 +3,9 @@ import numpy as np
 EPS = np.finfo(float).eps
 
 
-def _generate_step(
-                x=None, n=1, order=2, method='central', base_step=None,
-                scale=500, num_steps=15, step_nom=None, step_ratio=None,
-                offset=0, step=None):
+def _generate_step(x=None, n=1, order=2, method='central', base_step=None,
+                   scale=500, num_steps=15, step_nom=None, step_ratio=None,
+                   offset=0, step=None):
     """
     Generates steps in an adaptive manner, min_step generates
     increasing sequence while max_step generates decreasing
@@ -80,6 +79,7 @@ def _generate_step(
         min_num_steps = min_num_steps//2
     min_num_steps = max(min_num_steps, 1)
     num_steps = max(num_steps, min_num_steps)
+
     if step in ['max_step', None]:
         if base_step is None:
             base_step = 2.0

@@ -14,7 +14,7 @@ def derivative(f, x, **options):
         ``f(x)`` should be univariate.
     x : array
         parameters at which the derivative is evaluated
-    **options : dict
+    options : dict
         options for specifying the method and epsilon.
         method : {'central','forward'}.
         Stepsize, if None, optimal stepsize is used. This is EPS**(1/2)*x for
@@ -61,7 +61,7 @@ def gradient(f, x, **options):
         `f(x)` returning one value.
     x : 2d array
         parameters at which the derivative is evaluated.
-    **options : dict
+    options : dict
         options for specifying the method and epsilon.
         method : {'central','foward'}.
         Stepsize, if None, optimal stepsize is used. This is EPS**(1/2)*x for
@@ -115,7 +115,7 @@ def jacobian(f, x, **options):
     f : function
     x : 2d array
         parameters at which the derivative is evaluated.
-    **options : dict
+    options : dict
         options for specifying the method and epsilon.
         method : {'central','foward'}.
         Stepsize, if None, optimal stepsize is used. This is EPS**(1/2)*x for
