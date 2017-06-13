@@ -4,7 +4,7 @@ EPS = np.finfo(float).eps
 
 
 def _generate_step(x=None, n=1, order=2, method='central', base_step=None,
-                   scale=500, num_steps=15, step_nom=None, step_ratio=None,
+                   scale=2.5, num_steps=15, step_nom=None, step_ratio=None,
                    offset=0, step=None):
     """
     Generates steps in an adaptive manner, min_step generates

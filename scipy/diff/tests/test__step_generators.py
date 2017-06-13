@@ -2,44 +2,41 @@ import numpy as np
 from numpy.testing import (assert_, run_module_suite)
 from scipy.diff._step_generators import _generate_step
 
-
-def steps(base_step, step_ratio, num_steps, sign):
-    for i in range(num_steps):
-        steps = base_step * step_ratio**(sign*i)
-        if (np.abs(steps) > 0).all():
-            yield steps
+EPS = np.finfo(float).eps
 
 
 class Test(object):
-    def test_min_step(self):
-        for base_step in range(1, 10000):
-            np.random.seed(0)
-            step_ratio = 20*np.random.randint(2, 20)
-            base_step = float(base_step)
-            step_gen = _generate_step(
-                                    base_step=base_step, step_ratio=step_ratio,
-                                    num_steps=100, step='min_step')
-            steps_gen = steps(
-                            base_step=base_step, step_ratio=step_ratio,
-                            num_steps=100, sign=1)
-            step_gen = [step for step in step_gen]
-            steps_gen = [step for step in steps_gen]
-            assert_(np.allclose(steps_gen, steps_gen))
+    def test_step_ratio(self):
+        for n in range(1, 3):
+            if n == 1:
+                est = 2.0
+            else:
+                est = 1.6
 
-    def test_max_step(self):
-        for base_step in range(1, 10000):
-            np.random.seed(0)
-            step_ratio = 20*np.random.randint(2, 20)
-            base_step = float(base_step)
-            step_gen = _generate_step(
-                                    base_step=base_step, step_ratio=step_ratio,
-                                    num_steps=100, step='max_step')
-            steps_gen = steps(
-                            base_step=base_step, step_ratio=step_ratio,
-                            num_steps=100, sign=-1)
+            step_gen = _generate_step(n=n, step='max_step')
             step_gen = [step for step in step_gen]
-            steps_gen = [step for step in steps_gen]
-            assert_(np.allclose(steps_gen, steps_gen))
+            step_ratio = step_gen[0] / step_gen[1]
+            assert_(np.allclose(step_ratio, est))
+
+            step_gen = _generate_step(n=n, step='min_step')
+            step_gen = [step for step in step_gen]
+            step_ratio = step_gen[1] / step_gen[0]
+            assert_(np.allclose(step_ratio, est))
+
+    def test_base_step(self):
+        for step in ['max_step', 'min_step']:
+            if step == 'max_step':
+                base_step = 2.0
+            else:
+                base_step = EPS**(1. / 2.5)
+
+            step_gen = _generate_step(step=step)
+            step_gen = [stepi for stepi in step_gen]
+            assert_(np.allclose(step_gen[0], base_step))
+
+            step_gen = _generate_step(step=step, base_step=10.0)
+            step_gen = [stepi for stepi in step_gen]
+            assert_(np.allclose(step_gen[0], 10.0))
 
 
 if __name__ == '__main__':
