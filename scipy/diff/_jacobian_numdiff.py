@@ -3,86 +3,8 @@ import numpy as np
 from _step_generators import _generate_step
 from scipy import misc
 from scipy.ndimage.filters import convolve1d
-from scipy import linalg
-import warnings
+from ._derivative_numdiff import extrapolate
 
-EPS = np.finfo(float).eps
-TINY = np.finfo(float).tiny
-
-
-def choose_derivative_with_least_error(der, errors):
-    try:
-        median = np.nanmedian(errors, axis=0)
-        p75 = np.nanpercentile(errors, 75, axis=0)
-        p25 = np.nanpercentile(errors, 25, axis=0)
-        iqr = np.abs(p75-p25)
-        a_median = np.abs(median)
-        outliers = (((abs(errors) < (a_median / 10)) +
-                    (abs(errors) > (a_median * 10))) * (a_median > 1e-8) +
-                    ((errors < p25-1.5*iqr) + (p75+1.5*iqr < der)))
-        errors = errors + outliers * np.abs(errors - median)
-    except ValueError as msg:
-        warnings.warn(str(msg))
-        errors = 0 * errors
-
-    try:
-        result = np.nanargmin(errors, axis=0)
-        result = np.asarray(result, dtype=float)
-        min_errors = np.nanmin(errors, axis=0)
-        for i, min_error in enumerate(min_errors):
-            idx = np.flatnonzero(errors[:, i] == min_error)
-            result[i] = (der[idx[idx.size // 2]][i])
-        return result
-    except ValueError as msg:
-        warnings.warn(str(msg))
-        result = np.zeros(der.shape[1], dtype=float)
-        for i in range(der.shape[1]):
-            result[i] = der[0][i]
-        return result
-
-
-def extrapolate(order, num_terms, step, step_ratio, results, steps, shape):
-    print shape
-    res_shape = results.shape[0]
-    if res_shape is None:
-        res_shape = num_terms + 1
-    num_terms = min(num_terms, res_shape - 1)
-    if num_terms > 0:
-        i, j = np.ogrid[0:num_terms + 1, 0:num_terms]
-        r_mat = np.ones((num_terms + 1, num_terms + 1))
-        r_mat[:, 1:] = (1.0 / step_ratio)**(i * (step * j + order))
-        r_mat = linalg.pinv(r_mat)[0]
-    else:
-        r_mat = np.ones((1, ))
-    new_sequence = convolve1d(results,
-                              r_mat[::-1], axis=0, origin=(num_terms) // 2)
-    new_sequence = new_sequence[:res_shape + 1 - r_mat.size]
-    steps = steps[:res_shape + 1 - r_mat.size]
-    if len(new_sequence) > 2:
-        steps = steps[2:]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            conv1 = new_sequence[0:-2]
-            conv2 = new_sequence[1:-1]
-            conv3 = new_sequence[2:]
-            err1 = conv2 - conv1
-            err2 = conv3 - conv2
-            tol1 = np.maximum(np.abs(conv1), np.abs(conv2)) * EPS
-            tol2 = np.maximum(np.abs(conv3), np.abs(conv2)) * EPS
-            err1[np.abs(err1) < TINY] = TINY
-            err2[np.abs(err2) < TINY] = TINY
-            ss = 1.0 / err2 - 1.0 / err1 + TINY
-            small = abs(ss * conv2) <= 1.0e-3
-            converged = (np.abs(err1) <= tol1) & (np.abs(err2) <= tol2) | small
-            new_seq = np.where(converged, conv3 * 1.0, conv2 + 1.0 / ss)
-            abserr = np.where(converged, tol2 * 10, np.abs(new_seq - conv3))
-            abserr = np.abs(err1) + np.abs(err2) + abserr
-            result = choose_derivative_with_least_error(new_seq, abserr)
-            result = result.reshape(shape)
-    else:
-        abserr = np.abs(new_sequence) * 0
-        result = choose_derivative_with_least_error(new_sequence, abserr)
-    return result
 
 def _increments(n, h):
     ei = np.zeros(np.shape(h), float)
@@ -91,44 +13,14 @@ def _increments(n, h):
         yield ei
         ei[k] = 0.0
 
-def _atleast_2d(original_shape, ndim):
-    if ndim == 1:
-        original_shape = (1, ) + tuple(original_shape)
-    return tuple(original_shape)
 
-def _vstack(sequence, steps):
-    sequence = np.asarray(sequence)
-    original_shape = list(np.shape(np.atleast_1d(sequence[0].squeeze())))
-    ndim = len(original_shape)
-    axes = [0, 1, 2][:ndim]
-    axes[:2] = axes[1::-1]
-    original_shape[:2] = original_shape[1::-1]
-
-    f_del = np.vstack([np.atleast_1d(r.squeeze()).transpose(axes).ravel()
-                       for r in sequence])
-    h = np.vstack([np.atleast_1d(r.squeeze()).transpose(axes).ravel()
-                   for r in steps])
-    #_assert(f_del.size == h.size, 'fun did not return data of correct '
-     #       'size (it must be vectorized)')
-    return f_del, h, _atleast_2d(original_shape, ndim)
-
-def _expand_steps(steps, x_i, fxi):
-    if np.size(fxi) == 1:
-        return steps
-    n = len(x_i)
-    one = np.ones_like(fxi)
-    return [np.array([one * h[i] for i in range(n)]) for h in steps]
-
-
-def derivative(f, x, **options):
+def jacobian(f, x, **options):
     """
-    Derivative of a function
+    Jacobian of a function
 
     Parameters
     ----------
     f : function
-        ``f(x)`` returning one value.
-        ``f(x)`` should be univariate.
     x : array
         parameters at which the derivative is evaluated
     options : dict
@@ -137,18 +29,22 @@ def derivative(f, x, **options):
 
     Returns
     -------
-    derivative : array
-        derivative
+    jacobian : array
+        jacobian
 
     Note
     ----
-    This implementation is adapted from numdifftools :
+    1. This implementation is adapted from numdifftools :
     https://github.com/pbrod/numdifftools/tree/master/numdifftools
+
+    2.  If fun returns a 1d array, jacobian returns a 2d array.
+    If a 2d array is returned by fun (e.g., with a value for
+    each observation), it returns a 3d array.
 
     Examples
     --------
-    >>> derivative((lambda x: x**2), [1,2])
-    [2,4]
+    >>> jacobian(lambda x: [[x[0]*x[1]**2], [x[0]*x[1]]], [[1,2],[3,4]])
+    [array([[ 4.,  4.],[ 2.,  1.]]), array([[ 16.,  24.],[  4.,   3.]])]
 
      References
     ----------
@@ -158,8 +54,9 @@ def derivative(f, x, **options):
 
     3. D Levy, Numerical Differentiation, Section 5
     """
-
+    
     x = np.asarray(np.atleast_1d(x))
+    x = np.transpose(x)
     method = options.pop('method', 'central')
     n = options.pop('n', 1)
     order = options.pop('order', 2)
@@ -186,34 +83,45 @@ def derivative(f, x, **options):
         step_ratio_inv = 1.0 / step_ratio
         ni = len(x)
         if method is 'central':
-            fxi = f(x)
-            results = [[((f(x + hi) - f(x - hi)) / 2.0) for hi in _increments(ni, h)] for h in steps]
+            fxi = np.asarray(f(x))
+            results = [[(np.asarray((f(x + hi)) - np.asarray(f(x - hi))) / 2.0)
+                        for hi in _increments(ni, h)] for h in steps]
             fd_step = 2
-            if n%2 == 1:
+            if n % 2 == 1:
                 offset = 1
             else:
                 offset = 2
-        """if n % 2 == 1 and method is 'central':
-            fxi = 0.0
-            results = [[((f(x + hi) - f(x - hi)) / 2.0) for hi in _increments(n, h)] for h in steps]
-            fd_step = 2
-            offset = 1"""
         if method is 'forward':
-            fxi = f(x)
-            results = [[(f(x + hi) - fxi) for hi in _increments(ni, h)] for h in steps]
+            fxi = np.asarray(f(x))
+            results = [[(np.asarray(f(x + hi)) - fxi) for hi in
+                        _increments(ni, h)] for h in steps]
             fd_step = 1
             offset = 1
         if method is 'backward':
-            fxi = f(x)
-            results = [[(fxi - f(x - hi)) for hi in _increments(ni, h)] for h in steps]
+            fxi = np.asarray(f(x))
+            results = [[(fxi - np.asarray(f(x - hi))) for hi in
+                        _increments(ni, h)] for h in steps]
             fd_step = 1
             offset = 1
-        steps = _expand_steps(steps, x, fxi)
-        fun, h, original_shape = _vstack(results, steps)
-        #fun = np.vstack(list(np.ravel(r)) for r in results)
-        #h = np.vstack(list(
-         #       np.ravel(np.ones(np.shape(
-          #                               results[0]))*step)) for step in steps)
+        results = np.asarray(results)
+        if np.size(fxi) > 1:
+            one = np.ones_like(fxi)
+            steps = [np.array([one * h[i] for i in range(ni)]) for h in steps]
+        original_shape = list(np.shape(np.atleast_1d(results[0].squeeze())))
+        axes = [0, 1, 2][:len(original_shape)]
+        axes[:2] = axes[1::-1]
+        original_shape[:2] = original_shape[1::-1]
+        fun = np.vstack([np.atleast_1d(r.squeeze()).transpose(axes).ravel()
+                        for r in results])
+        h = np.vstack([np.atleast_1d(r.squeeze()).transpose(axes).ravel()
+                       for r in steps])
+        if len(original_shape) == 1:
+            original_shape = (1, ) + tuple(original_shape)
+        else:
+            original_shape = tuple(original_shape)
+        if fun.size != h.size:
+                raise ValueError('fun did not return data of correct '
+                                 'size (it must be vectorized)')
         richardson_step = 1
         if method is 'central':
             richardson_step = 2
@@ -234,12 +142,12 @@ def derivative(f, x, **options):
         if h.shape[0] < n + order - 1:
             raise ValueError('num_steps must be larger than n + order - 1')
         fdiff = convolve1d(fun, fdi[::-1], axis=0, origin=(fdi.size - 1) // 2)
-        derivative = fdiff / (h**n)
+        jacobian = fdiff / (h**n)
         num_steps = max(h.shape[0] + 1 - fdi.size, 1)
-        derivative = extrapolate(order, richarson_terms, richardson_step,
-                                 step_ratio, derivative[:num_steps],
+        jacobian = extrapolate(order, richarson_terms, richardson_step,
+                                 step_ratio, jacobian[:num_steps],
                                  h[:num_steps], original_shape)
-    return derivative
-
-fun3 = lambda x : np.vstack((x[0]*x[1]*x[2]**2, x[0]*x[1]*x[2]))
-print derivative(fun3, [1., 2., 3.])
+    if jacobian.ndim == 3:
+        jacobian = np.transpose(jacobian)
+    jacobian = [np.transpose(jac) for jac in jacobian]
+    return jacobian
