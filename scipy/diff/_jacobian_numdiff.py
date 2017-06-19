@@ -1,9 +1,9 @@
 from __future__ import division
 import numpy as np
-from _step_generators import _generate_step
+from ._step_generators import _generate_step
 from scipy import misc
 from scipy.ndimage.filters import convolve1d
-from _derivative_numdiff import extrapolate
+from ._derivative_numdiff import extrapolate
 
 
 def _increments(n, h):
