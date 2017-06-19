@@ -1,9 +1,9 @@
 from __future__ import division
 import numpy as np
-from _step_generators import _generate_step
+from ._step_generators import _generate_step
 from scipy import misc
 from scipy.ndimage.filters import convolve1d
-from _derivative_numdiff import extrapolate
+from ._derivative_numdiff import extrapolate
 
 
 def hessdiag(f, x, **options):
@@ -28,7 +28,7 @@ def hessdiag(f, x, **options):
 
     Examples
     --------
-    >>> hessian(lambda x : x[0] + x[1]**2 + x[2]**3, [1,2,3])
+    >>> hessdiag(lambda x : x[0] + x[1]**2 + x[2]**3, [1,2,3])
     [  1.81898940e-12   2.00000000e+00   1.80000000e+01]
 
      References
@@ -119,66 +119,74 @@ def hessdiag(f, x, **options):
     hessdiag = np.transpose(hessdiag)
     return hessdiag
 
-def _central(f, fx, x, h, *args, **kwargs):
+
+def _central(f, x, h):
     n = len(x)
-    ee = np.identity(n)[...,None]*h[:,None,:]
+    diag = np.identity(n)[...,None]*h[:,None,:]
     hess = [np.outer(hi,hi) for hi in np.transpose(h)]
     hess = np.swapaxes(hess,0,2)
     for i in range(n):
-        hess[i, i] = (f(x + 2 * ee[i, :], *args, **kwargs) - 2 * fx +
-                      f(x - 2 * ee[i, :], *args, **kwargs)
+        hess[i, i] = (f(x + 2 * diag[i, :]) - 2 * f(x) +
+                      f(x - 2 * diag[i, :])
                       ) / (4. * hess[i, i])
         for j in range(i + 1, n):
-            hess[i, j] = (f(x + ee[i, :] + ee[j, :], *args, **kwargs) -
-                          f(x + ee[i, :] - ee[j, :], *args, **kwargs) -
-                          f(x - ee[i, :] + ee[j, :], *args, **kwargs) +
-                          f(x - ee[i, :] - ee[j, :], *args, **kwargs)
+            hess[i, j] = (f(x + diag[i, :] + diag[j, :]) -
+                          f(x + diag[i, :] - diag[j, :]) -
+                          f(x - diag[i, :] + diag[j, :]) +
+                          f(x - diag[i, :] - diag[j, :])
                           ) / (4. * hess[j, i])
             hess[j, i] = hess[i, j]
     return hess
 
-def _forward(f, fx, x, h, *args, **kwargs):
+
+def _forward(f, x, h):
     n = len(x)
-    ee = np.identity(n)[...,None]*h[:,None,:]
+    diag = np.identity(n)[...,None]*h[:,None,:]
     g = np.empty(x.shape)
     for i in range(n):
-        g[i] = f(x + ee[i, :], *args, **kwargs)
+        g[i] = f(x + diag[i, :])
 
     hess = [np.outer(hi,hi) for hi in np.transpose(h)]
     hess = np.swapaxes(hess,0,2)
     for i in range(n):
         for j in range(i, n):
-            hess[i, j] = (f(x + ee[i, :] + ee[j, :], *args, **kwargs) -
-                          g[i] - g[j] + fx) / hess[j, i]
+            hess[i, j] = (f(x + diag[i, :] + diag[j, :]) -
+                          g[i] - g[j] + f(x)) / hess[j, i]
             hess[j, i] = hess[i, j]
     return hess
 
 
-
-def hessi(f, x, **options):
+def hessian(f, x, **options):
     """
-    Diagonal elements of Hessian of a function
+    Hessian of a function
 
     Parameters
     ----------
     f : function
         ``f(x)`` returning a scalar.
     x : array
-        parameters at which the hessdiag is to be evaluated
+        parameters at which the hessian is to be evaluated
     options : dict
-        options for specifying the method, order of hessdiag,
+        options for specifying the method,
         order of error and other parameters for step generation.
 
     Returns
     -------
-    hessdiag : array
-        Hessian diagonal
+    hess : array
+        Hessian
 
 
     Examples
     --------
-    >>> hessian(lambda x : x[0] + x[1]**2 + x[2]**3, [1,2,3])
-    [  1.81898940e-12   2.00000000e+00   1.80000000e+01]
+    >>> hessian(lambda x : x[0] + x[1]**2 + x[2]**3, [[1,1,1],[2,2,2]])
+    [[[  0.00000000e+00   0.00000000e+00   0.00000000e+00]
+      [  0.00000000e+00   2.00000000e+00   0.00000000e+00]
+      [  0.00000000e+00   0.00000000e+00   6.00000000e+00]]
+
+     [[  0.00000000e+00   0.00000000e+00   0.00000000e+00]
+      [  0.00000000e+00   2.00000000e+00   2.64678414e-16]
+      [  0.00000000e+00   2.64678414e-16   1.20000000e+01]]]
+
 
      References
     ----------
@@ -200,7 +208,7 @@ def hessi(f, x, **options):
                          ' as `max_step` or `min_step`')
     step_ratio = options.pop('step_ratio', None)
     if n == 0:
-        hessdiag = f(x)
+        hess = f(x)
     else:
         if step_ratio is None:
             if n == 1:
@@ -217,15 +225,15 @@ def hessi(f, x, **options):
         step_ratio_inv = 1.0 / step_ratio
         fxi = f(x)
         if method is 'central':
-            results = [_central(f,fxi,x,h) for h in steps]
+            results = [_central(f,x,h) for h in steps]
             fd_step = 2
             offset = 2
         if method is 'forward':
-            results = [_forward(f,fxi,x,h) for h in steps]
+            results = [_forward(f,x,h) for h in steps]
             fd_step = 1
             offset = 1
         if method is 'backward':
-            results = [_forward(f,fxi,x,-h) for h in steps]
+            results = [_forward(f,x,-h) for h in steps]
             fd_step = 1
             offset = 1
         fun = np.vstack(list(np.ravel(r)) for r in results)
@@ -237,12 +245,7 @@ def hessi(f, x, **options):
         if method is 'central':
             richardson_step = 2
         results = np.asarray(results)
-        hessdiag = extrapolate(order, richarson_terms, richardson_step,
+        hess = extrapolate(order, richarson_terms, richardson_step,
                                step_ratio, fun,
                                h, np.shape(results[0]))
-    return np.transpose(hessdiag)
-
-def rosen(x):
-    return (x[0])**2 + (x[1]**3) + (x[2]**4)
-
-print hessi(rosen,[[1,1,1],[2,2,2]],method='forward')
+    return np.transpose(hess)
