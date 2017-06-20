@@ -7,14 +7,19 @@ from scipy.diff._derivative import derivative as derivative1
 from scipy.diff._derivative_numdiff import derivative as derivative2
 from scipy.diff._jacobian_numdiff import jacobian as jacobian2
 from scipy.diff._jacobian_numdiff import gradient as gradient2
+from scipy.diff._hessian_numdiff import hessdiag as hessdiag2
+from scipy.diff._hessian_numdiff import hessian as hessian2
 
 
 class Test(object):
     def __init__(self, derivative=None, jacobian=None,
-                 gradient=None, atol=None):
+                 gradient=None, hessian=None, hessdiag=None,
+                 atol=None):
         self.derivative = derivative
         self.jacobian = jacobian
         self.gradient = gradient
+        self.hessian = hessian
+        self.hessdiag = hessdiag
         self.atol = atol
 
     def der(self):
@@ -75,12 +80,60 @@ class Test(object):
             f = np.reshape(np.transpose(np.asarray(f)), df.shape)
             assert_allclose(df, f, atol=1e-7)
 
+    def hess(self):
+        funcs = [
+                (lambda x: x[0]*x[1]**2,
+                 lambda x: [[np.zeros(x[0].shape),
+                             2*x[1]], [2*x[1], 2*x[0]]]),
+                (lambda x: x[0]**3 + x[1]**2,
+                 lambda x: [[6*x[0], np.zeros(x[1].shape)],
+                            [np.zeros(x[0].shape),
+                             2*np.ones(x[1].shape)]]),
+                (lambda x: np.exp(x[0]) + np.exp(x[1]),
+                 lambda x: [[np.exp(x[0]), np.zeros(x[1].shape)],
+                            [np.zeros(x[1].shape), np.exp(x[1])]]),
+                (lambda x: np.cos(x[0])+np.sin(x[1]),
+                 lambda x: [[-np.cos(x[0]), np.zeros(x[1].shape)],
+                            [np.zeros(x[1].shape), -np.sin(x[1])]]),
+        ]
+        for func in funcs:
+            np.random.seed(0)
+            rand = 2*10*np.random.rand(10, 2)-10
+            df = self.hessian(func[0], rand)
+            f = func[1](np.transpose(rand))
+            df = np.asarray(df)
+            f = np.reshape(np.transpose(np.asarray(f)), df.shape)
+            assert_allclose(df, f, atol=1e-12)
+
+    def hessdiagonal(self):
+        funcs = [
+                (lambda x: x[0]*x[1]**2,
+                 lambda x: [np.zeros(x[0].shape), 2*x[0]]),
+                (lambda x: x[0]**3 + x[1]**2,
+                 lambda x: [6*x[0], 2*np.ones(x[1].shape)]),
+                (lambda x: np.exp(x[0]) + np.exp(x[1]),
+                 lambda x: [np.exp(x[0]), np.exp(x[1])]),
+                (lambda x: np.cos(x[0])+np.sin(x[1]),
+                 lambda x: [-np.cos(x[0]), -np.sin(x[1])]),
+        ]
+        for func in funcs:
+            np.random.seed(0)
+            rand = 2*10*np.random.rand(10, 2)-10
+            df = self.hessdiag(func[0], rand)
+            f = func[1](np.transpose(rand))
+            df = np.asarray(df)
+            f = np.reshape(np.transpose(np.asarray(f)), df.shape)
+            assert_allclose(df, f, atol=1e-10)
+
 
 class Test_numdiff(Test):
     def __init__(self):
         super(Test_numdiff, self).__init__(derivative=derivative2,
                                            jacobian=jacobian2,
-                                           gradient=gradient2, atol=1e-10)
+                                           gradient=gradient2,
+                                           hessian=hessian2,
+                                           hessdiag=hessdiag2,
+                                           atol=1e-10)
 
     def test_der(self):
         self.der()
@@ -90,6 +143,12 @@ class Test_numdiff(Test):
 
     def test_jac(self):
         self.jac()
+
+    def test_hess(self):
+        self.hess()
+
+    def test_hessdiagonal(self):
+        self.hessdiagonal()
 
     def test_for_higher_orders(self):
             true_vals = (0.0, -1.0, 0.0, 1.0, 0.0, -1.0, 0.0)

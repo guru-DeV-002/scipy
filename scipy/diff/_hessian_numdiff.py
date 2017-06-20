@@ -28,8 +28,8 @@ def hessdiag(f, x, **options):
 
     Examples
     --------
-    >>> hessdiag(lambda x : x[0] + x[1]**2 + x[2]**3, [1,2,3])
-    [  1.81898940e-12   2.00000000e+00   1.80000000e+01]
+    >>> hessdiag(lambda x : x[0] + x[1]**2 + x[2]**3, [[1,2,3]])
+    [[  1.81898940e-12   2.00000000e+00   1.80000000e+01]]
 
      References
     ----------
@@ -69,22 +69,28 @@ def hessdiag(f, x, **options):
         if method is 'central':
             fxi = f(x)
             ni = len(x)
-            increments = [np.identity(ni)[...,None]*h[:,None,:] for h in steps]
-            results = np.array([(f(x + hi) + f(x - hi)) / 2.0 - fxi for hi in increments])
+            increments = [np.identity(ni)[..., None]*h[:, None, :]
+                          for h in steps]
+            results = np.array([[(f(x + hi) + f(x - hi)) / 2.0 - fxi
+                                for hi in h] for h in increments])
             fd_step = 2
             offset = 2
         if method is 'forward':
             fxi = f(x)
             ni = len(x)
-            increments = [np.identity(ni)[...,None]*h[:,None,:] for h in steps]
-            results = np.array([f(x + hi) - fxi for hi in increments])
+            increments = [np.identity(ni)[..., None]*h[:, None, :]
+                          for h in steps]
+            results = np.array([[f(x + hi) - fxi for hi in h]
+                                for h in increments])
             fd_step = 1
             offset = 1
         if method is 'backward':
             fxi = f(x)
             ni = len(x)
-            increments = [np.identity(ni)[...,None]*h[:,None,:] for h in steps]
-            results = np.array([fxi - f(x - hi) for hi in increments])
+            increments = [np.identity(ni)[..., None]*h[:, None, :]
+                          for h in steps]
+            results = np.array([[fxi - f(x - hi) for hi in h]
+                                for h in increments])
             fd_step = 1
             offset = 1
         fun = np.vstack(list(np.ravel(r)) for r in results)
@@ -122,9 +128,9 @@ def hessdiag(f, x, **options):
 
 def _central(f, x, h):
     n = len(x)
-    diag = np.identity(n)[...,None]*h[:,None,:]
-    hess = [np.outer(hi,hi) for hi in np.transpose(h)]
-    hess = np.swapaxes(hess,0,2)
+    diag = np.identity(n)[..., None]*h[:, None, :]
+    hess = [np.outer(hi, hi) for hi in np.transpose(h)]
+    hess = np.swapaxes(hess, 0, 2)
     for i in range(n):
         hess[i, i] = (f(x + 2 * diag[i, :]) - 2 * f(x) +
                       f(x - 2 * diag[i, :])
@@ -141,13 +147,13 @@ def _central(f, x, h):
 
 def _forward(f, x, h):
     n = len(x)
-    diag = np.identity(n)[...,None]*h[:,None,:]
+    diag = np.identity(n)[..., None]*h[:, None, :]
     g = np.empty(x.shape)
     for i in range(n):
         g[i] = f(x + diag[i, :])
 
-    hess = [np.outer(hi,hi) for hi in np.transpose(h)]
-    hess = np.swapaxes(hess,0,2)
+    hess = [np.outer(hi, hi) for hi in np.transpose(h)]
+    hess = np.swapaxes(hess, 0, 2)
     for i in range(n):
         for j in range(i, n):
             hess[i, j] = (f(x + diag[i, :] + diag[j, :]) -
@@ -221,21 +227,12 @@ def hessian(f, x, **options):
                        method=method, step=step, step_ratio=step_ratio)
         step_gen = _generate_step(**options)
         steps = [stepi for stepi in step_gen]
-        fact = 1.0
-        step_ratio_inv = 1.0 / step_ratio
-        fxi = f(x)
         if method is 'central':
-            results = [_central(f,x,h) for h in steps]
-            fd_step = 2
-            offset = 2
+            results = [_central(f, x, h) for h in steps]
         if method is 'forward':
-            results = [_forward(f,x,h) for h in steps]
-            fd_step = 1
-            offset = 1
+            results = [_forward(f, x, h) for h in steps]
         if method is 'backward':
-            results = [_forward(f,x,-h) for h in steps]
-            fd_step = 1
-            offset = 1
+            results = [_forward(f, x, -h) for h in steps]
         fun = np.vstack(list(np.ravel(r)) for r in results)
         h = np.vstack(list(
                 np.ravel(np.ones(np.shape(
@@ -246,6 +243,6 @@ def hessian(f, x, **options):
             richardson_step = 2
         results = np.asarray(results)
         hess = extrapolate(order, richarson_terms, richardson_step,
-                               step_ratio, fun,
-                               h, np.shape(results[0]))
+                           step_ratio, fun,
+                           h, np.shape(results[0]))
     return np.transpose(hess)
